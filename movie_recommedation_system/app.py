@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import os
 import requests
+from pathlib import Path
 from PIL import Image
 from io import BytesIO
 
@@ -42,15 +43,22 @@ def svd_light_predict_est(svd_light, user_id, movie_id):
     return float(np.clip(est, min_r, max_r))
 
 
+# Resolve files relative to this project folder (important for monorepo deployments).
+PROJECT_DIR = Path(__file__).resolve().parent
+
+def project_path(*parts: str) -> str:
+    return str(PROJECT_DIR.joinpath(*parts))
+
+
 # LOAD COMPONENTS
 @st.cache_resource
 def load_all():
     # Paths relative to root
-    enriched = pd.read_csv('data/processed/enriched_movies.csv')
+    enriched = pd.read_csv(project_path("data", "processed", "enriched_movies.csv"))
     
     embeddings_path_candidates = [
-        'artifacts/content/movie_embeddings.npy',
-        'data/processed/movie_embeddings.npy',  # backward-compat fallback
+        project_path("artifacts", "content", "movie_embeddings.npy"),
+        project_path("data", "processed", "movie_embeddings.npy"),  # backward-compat fallback
     ]
     embeddings_path = next((p for p in embeddings_path_candidates if os.path.exists(p)), None)
     if embeddings_path is None:
@@ -63,15 +71,15 @@ def load_all():
     # Prefer a lightweight collaborative model export so the app can run on Streamlit Cloud
     # without compiling `scikit-surprise`. Fallback to the original Surprise pickle locally.
     svd_model = None
-    svd_light_path = "artifacts/svd_model_light.pkl"
+    svd_light_path = project_path("artifacts", "svd_model_light.pkl")
     if os.path.exists(svd_light_path):
         with open(svd_light_path, "rb") as f:
             svd_model = pickle.load(f)
     else:
-        with open("artifacts/svd_model.pkl", "rb") as f:
+        with open(project_path("artifacts", "svd_model.pkl"), "rb") as f:
             svd_model = pickle.load(f)
     
-    ratings = pd.read_csv('data/ml-latest-small/ratings.csv')
+    ratings = pd.read_csv(project_path("data", "ml-latest-small", "ratings.csv"))
     
     return enriched, embeddings, svd_model, ratings
 
