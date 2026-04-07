@@ -1,10 +1,14 @@
 streamlit>=1.32.0
-pandas
-numpy
-scikit-learn
-sentence-transformers
-scikit-surprise
+
+# Data / math (pinned to avoid bleeding-edge Python/numpy build issues on Streamlit Cloud)
+pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.5.2
+
+# Collaborative filtering (Surprise)
+scikit-surprise==1.1.4
+Cython<3.0
+
+# App utilities
 Pillow
 requests
-tqdm
-

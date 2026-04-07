@@ -146,11 +146,31 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Notebook dependencies (optional)
+The notebooks use extra packages that are **not required** to run the Streamlit app. Install them only if you plan to run the Jupyter pipeline:
+```bash
+pip install -r requirements_notebooks.txt
+```
+
 ## Usage
 Run the Streamlit app:
 ```bash
 streamlit run app.py
 ```
+
+## Deploy to Streamlit Community Cloud
+This repo is deployable on Streamlit Cloud without committing any API keys.
+
+1. Push the project to GitHub (include `app.py`, `requirements.txt`, `data/`, and `artifacts/`).
+2. In Streamlit Cloud, click **New app** and select:
+   - Repository + branch
+   - Main file path: `movie_recommedation_system/app.py` (or `app.py` if this project is its own repo)
+3. This project includes `runtime.txt` to pin the Python version on Streamlit Cloud (avoids Python 3.14 build issues with `scikit-surprise`).
+4. (Optional) If you call TMDB APIs from the app, add the key using Streamlit **Secrets**:
+   - App → Settings → Secrets:
+     ```toml
+     TMDB_API_KEY = "your_key_here"
+     ```
 
 If you want to **regenerate artifacts** (embeddings / SVD model), run the notebooks in order:
 1. `movie_recommender/01_data_preparation.ipynb`

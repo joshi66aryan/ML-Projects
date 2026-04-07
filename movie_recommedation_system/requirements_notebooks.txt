@@ -1,0 +1,6 @@
+# Extra dependencies used by the Jupyter notebooks (not required to run `app.py`).
+sentence-transformers
+tqdm
+jupyter
+ipykernel
+
