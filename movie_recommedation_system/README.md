@@ -14,7 +14,8 @@ High-level components:
   - Lets you pick a userId (collaborative focus) or a seed movie (content boost).
   - Displays recommendations, posters, and short explanations.
 - **Artifacts (`artifacts/`)**
-  - `svd_model.pkl` → trained collaborative filtering model.
+  - `svd_model_light.pkl` → lightweight collaborative model for deployment (no `surprise` needed).
+  - `svd_model.pkl` → original trained Surprise SVD model (mainly for local dev / training).
   - `artifacts/content/movie_embeddings.npy` → semantic embeddings used for content similarity.
 - **Data (`data/`)**
   - MovieLens ratings/movies data (inputs to training).
@@ -64,7 +65,9 @@ What SVD “produces” that helps hybrid search:
 1. **Load data & artifacts**
    - Reads `data/processed/enriched_movies.csv` for movie metadata.
    - Loads embeddings from `artifacts/content/movie_embeddings.npy`.
-   - Loads the trained SVD model from `artifacts/svd_model.pkl`.
+   - Loads the collaborative model:
+     - Prefers `artifacts/svd_model_light.pkl` (deployment-friendly)
+     - Falls back to `artifacts/svd_model.pkl` (Surprise model)
 2. **Choose mode**
    - **For This User:** recommends based mostly on SVD predictions for a given `userId`.
    - **More Like This Movie:** selects a seed title and computes cosine similarity to boost content relevance.
@@ -118,9 +121,12 @@ In other words:
 .
 ├── app.py                         # Streamlit app (loads artifacts + serves recommendations)
 ├── requirements.txt               # Python dependencies
+├── requirements_notebooks.txt     # Notebook-only dependencies (training/experiments)
+├── runtime.txt                    # Streamlit Cloud Python version pin (may be ignored in monorepos)
 ├── .gitignore                     # Ignores venv, caches, secrets, etc.
 ├── api_key.py                     # (Ignored) TMDB key used by notebooks; don’t commit secrets
 ├── artifacts/                     # Trained models + configs used by the app
+│   ├── svd_model_light.pkl         # Lightweight SVD export (no scikit-surprise at runtime)
 │   ├── svd_model.pkl              # Trained Surprise SVD model (collaborative filtering)
 │   ├── svd_metadata.pkl           # Training metadata (metrics + params)
 │   ├── hybrid_config.pkl          # Optional config describing hybrid defaults
@@ -165,8 +171,9 @@ This repo is deployable on Streamlit Cloud without committing any API keys.
 2. In Streamlit Cloud, click **New app** and select:
    - Repository + branch
    - Main file path: `movie_recommedation_system/app.py` (or `app.py` if this project is its own repo)
-3. This project includes `runtime.txt` to pin the Python version on Streamlit Cloud (avoids Python 3.14 build issues with `scikit-surprise`).
-   - If you’re deploying from a monorepo, Streamlit may ignore `runtime.txt` in a subfolder. This project also works without `scikit-surprise` at runtime by using `artifacts/svd_model_light.pkl`.
+3. This project is deployable even on newer Python versions because it does **not** require `scikit-surprise` at runtime:
+   - The app uses `artifacts/svd_model_light.pkl` for collaborative predictions (pure NumPy).
+   - `runtime.txt` is included as a pin, but Streamlit may ignore it in monorepos.
 4. (Optional) If you call TMDB APIs from the app, add the key using Streamlit **Secrets**:
    - App → Settings → Secrets:
      ```toml
@@ -191,8 +198,8 @@ If you want to **regenerate artifacts** (embeddings / SVD model), run the notebo
 - Streamlit (UI)
 - pandas / NumPy (data)
 - scikit-learn (cosine similarity)
-- scikit-surprise (SVD collaborative filtering)
 - Sentence-Transformers (used in notebooks to build embeddings)
+- scikit-surprise (used in notebooks to train the SVD model; not required at runtime)
 - TMDB API (used in notebooks for metadata/posters)
 
 
