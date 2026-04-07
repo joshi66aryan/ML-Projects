@@ -194,3 +194,8 @@ If you want to **regenerate artifacts** (embeddings / SVD model), run the notebo
 - scikit-surprise (SVD collaborative filtering)
 - Sentence-Transformers (used in notebooks to build embeddings)
 - TMDB API (used in notebooks for metadata/posters)
+
+
+
+## Deployment URL
+- https://kejszhykrjtazynwydkvyg.streamlit.app/
