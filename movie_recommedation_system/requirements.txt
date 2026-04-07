@@ -1,0 +1,10 @@
+streamlit>=1.32.0
+pandas
+numpy
+scikit-learn
+sentence-transformers
+scikit-surprise
+Pillow
+requests
+tqdm
+
