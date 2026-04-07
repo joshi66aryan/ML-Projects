@@ -191,12 +191,8 @@ def get_recommendations(user_id, seed_title=None, top_n=10, alpha=0.6):
     
     # Determine effective alpha based on mode.
     effective_alpha = alpha
-    if seed_title:                                      # "More Like This" mode
-        # Keep the app content-heavy by default, but still allow alpha=1.0 for pure content.
-        effective_alpha = max(alpha, 0.92)
-        if effective_alpha != alpha:
-            st.info("🔥 Content mode active — alpha boosted to 0.92 for strong similarity")
-    
+
+
     # Seed embedding lookup:
     # - Streamlit selectbox provides exact title strings.
     # - We do an exact match first, then a safe substring match (regex=False) because
