@@ -12,6 +12,36 @@ st.set_page_config(page_title="Movie Recommender", layout="wide", page_icon="�
 st.title("🎥 Smart Movie Recommender")
 st.markdown("Hybrid Content + Collaborative Recommendations with Explanations")
 
+# --- Collaborative model helpers (no scikit-surprise required in production) ---
+def svd_light_predict_est(svd_light, user_id, movie_id):
+    """
+    Predict rating using a lightweight export of a Surprise SVD model.
+    `svd_light` is a dict saved in `artifacts/svd_model_light.pkl`.
+    """
+    global_mean = float(svd_light["global_mean"])
+    raw2inner_user = svd_light["raw2inner_user"]
+    raw2inner_item = svd_light["raw2inner_item"]
+
+    bu = svd_light["bu"]
+    bi = svd_light["bi"]
+    pu = svd_light["pu"]
+    qi = svd_light["qi"]
+
+    u = raw2inner_user.get(int(user_id))
+    i = raw2inner_item.get(int(movie_id))
+
+    est = global_mean
+    if u is not None:
+        est += float(bu[u])
+    if i is not None:
+        est += float(bi[i])
+    if u is not None and i is not None:
+        est += float(np.dot(pu[u], qi[i]))
+
+    min_r, max_r = svd_light.get("rating_scale", (0.5, 5.0))
+    return float(np.clip(est, min_r, max_r))
+
+
 # LOAD COMPONENTS
 @st.cache_resource
 def load_all():
@@ -30,8 +60,16 @@ def load_all():
         )
     embeddings = np.load(embeddings_path)
     
-    with open('artifacts/svd_model.pkl', 'rb') as f:   
-        svd_model = pickle.load(f)
+    # Prefer a lightweight collaborative model export so the app can run on Streamlit Cloud
+    # without compiling `scikit-surprise`. Fallback to the original Surprise pickle locally.
+    svd_model = None
+    svd_light_path = "artifacts/svd_model_light.pkl"
+    if os.path.exists(svd_light_path):
+        with open(svd_light_path, "rb") as f:
+            svd_model = pickle.load(f)
+    else:
+        with open("artifacts/svd_model.pkl", "rb") as f:
+            svd_model = pickle.load(f)
     
     ratings = pd.read_csv('data/ml-latest-small/ratings.csv')
     
@@ -98,8 +136,12 @@ def get_recommendations(user_id, seed_title=None, top_n=10, alpha=0.6):
         row = enriched_movies.iloc[i]
         
         # 1. Collaborative score (SVD)
-        pred = svd_model.predict(user_id, mid)
-        collab_norm = pred.est / 5.0
+        if isinstance(svd_model, dict) and svd_model.get("type") == "surprise_svd_light_v1":
+            est = svd_light_predict_est(svd_model, user_id, mid)
+        else:
+            pred = svd_model.predict(user_id, mid)
+            est = float(pred.est)
+        collab_norm = float(np.clip(est / 5.0, 0.0, 1.0))
         
         # 2. Content score
         content_score = 0.0
@@ -115,12 +157,12 @@ def get_recommendations(user_id, seed_title=None, top_n=10, alpha=0.6):
         if seed_title and content_score > 0.75:
             explain += f" • Very strong semantic match to '{seed_title}' ({content_score:.1%})"
         else:
-            explain += f" • Predicted rating: {pred.est:.2f}/5"
+            explain += f" • Predicted rating: {est:.2f}/5"
         
         results.append({
             'title': row['title'],
             'hybrid_score': hybrid_score,
-            'collab_pred': pred.est,
+            'collab_pred': est,
             'content_score': content_score,
             'poster_path': row.get('poster_path'),
             'overview': "" if pd.isna(row.get('overview', '')) else str(row.get('overview', '')),
@@ -178,4 +220,3 @@ if st.button("🚀 Get Recommendations", type="primary", use_container_width=Tru
                 if overview:
                     overview = str(overview)
                     st.write("**Plot:**", overview[:220] + "..." if len(overview) > 220 else overview)
-

@@ -4,3 +4,6 @@ tqdm
 jupyter
 ipykernel
 
+# Training / experimentation (Surprise SVD)
+scikit-surprise==1.1.4
+Cython<3.0

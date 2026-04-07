@@ -166,6 +166,7 @@ This repo is deployable on Streamlit Cloud without committing any API keys.
    - Repository + branch
    - Main file path: `movie_recommedation_system/app.py` (or `app.py` if this project is its own repo)
 3. This project includes `runtime.txt` to pin the Python version on Streamlit Cloud (avoids Python 3.14 build issues with `scikit-surprise`).
+   - If you’re deploying from a monorepo, Streamlit may ignore `runtime.txt` in a subfolder. This project also works without `scikit-surprise` at runtime by using `artifacts/svd_model_light.pkl`.
 4. (Optional) If you call TMDB APIs from the app, add the key using Streamlit **Secrets**:
    - App → Settings → Secrets:
      ```toml
