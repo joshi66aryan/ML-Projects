@@ -60,7 +60,7 @@ def get_recommendations(user_id, seed_title=None, top_n=10, alpha=0.6):
     
     from sklearn.metrics.pairwise import cosine_similarity
     
-    # === DETERMINE EFFECTIVE ALPHA ===
+    # Determine effective alpha based on mode.
     effective_alpha = alpha
     if seed_title:                                      # "More Like This" mode
         # Keep the app content-heavy by default, but still allow alpha=1.0 for pure content.
@@ -68,7 +68,7 @@ def get_recommendations(user_id, seed_title=None, top_n=10, alpha=0.6):
         if effective_alpha != alpha:
             st.info("🔥 Content mode active — alpha boosted to 0.92 for strong similarity")
     
-    # === GET SEED EMBEDDING IF NEEDED ===
+    # Get the seed embeddings if needed
     seed_embedding = None
     if seed_title:
         # `str.contains` uses regex by default; movie titles often contain parentheses.
@@ -88,10 +88,9 @@ def get_recommendations(user_id, seed_title=None, top_n=10, alpha=0.6):
             else:
                 st.error(f"Seed movie not found: '{seed_title}'. Try selecting a different title.")
                 return []
-    
-    # === SCORE EVERY MOVIE (NO 4000 LIMIT — full dataset) ===
+
     results = []
-    for i in range(len(enriched_movies)):               # ← ALL ~9700 movies
+    for i in range(len(enriched_movies)):              
         mid = enriched_movies.iloc[i]['movieId']
         if mid in user_rated:
             continue
@@ -180,7 +179,3 @@ if st.button("🚀 Get Recommendations", type="primary", use_container_width=Tru
                     overview = str(overview)
                     st.write("**Plot:**", overview[:220] + "..." if len(overview) > 220 else overview)
 
-#     st.success("Done! Scroll to see all recommendations.")
-
-# st.markdown("---")
-# st.caption("Hybrid Movie Recommender | Content Embeddings + SVD + Explanations | Running locally on your M1 MacBook Air")

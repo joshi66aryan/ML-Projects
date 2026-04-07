@@ -165,12 +165,6 @@ If you want to **regenerate artifacts** (embeddings / SVD model), run the notebo
 - Streamlit UI with posters and explanations
 - Cached TMDB enrichment (for faster data prep)
 
-## Future Improvements (Optional)
-- Move secrets to environment variables (remove `api_key.py` usage entirely)
-- Add a small `src/` package (separate UI from recommendation logic)
-- Add evaluation scripts (precision@k / recall@k) and regression tests
-- Persist artifacts with versioning (dataset hash + model version)
-
 ## Tech Stack
 - Python 3
 - Streamlit (UI)
